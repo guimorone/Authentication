@@ -1,4 +1,5 @@
 //jshint esversion:6
+require('dotenv').config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
@@ -25,9 +26,9 @@ const userSchema = new mongoose.Schema({
 });
 
 //mongoose will encrypt when we call "save()" and decrypt when we call "find" (ou seja, n precisa mudar o resto do código)
-const secret = process.env.SOME_LONG_UNGUESSABLE_STRING;
+
 userSchema.plugin(encrypt, {
-  secret: secret,
+  secret: process.env.SECRET,
   encryptedFields: ['password'] //só criptografar a senha
 });
 
