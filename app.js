@@ -41,7 +41,8 @@ mongoose.set("useCreateIndex", true);
 const userSchema = new mongoose.Schema({
   email: String,
   password: String,
-  googleId: String
+  googleId: String,
+  secret: String
 });
 
 userSchema.plugin(passportLocalMongoose);
@@ -100,11 +101,23 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/secrets", (req, res) => {
+  User.find({"secret": {$ne: null}}, (err, foundUsers) => {
+    if(err){
+      console.log(err);
+    } else{
+      if(foundUsers){
+        res.render("secrets", {usersWithSecrets: foundUsers});
+      }
+    }
+  });
+});
+
+app.get("/submit", (req, res) => {
   //para n precisar fazer ficar fazendo login o tempo todo
   //toda vez que o server reinicializa, os cookies são deletados
   //ai tem que fazer login dnv de qualquer forma
   if(req.isAuthenticated()){
-    res.render("secrets");
+    res.render("submit");
   } else{
     res.redirect("/login");
   }
@@ -144,11 +157,28 @@ app.post("/login", (req, res) => {
       res.redirect("/login"); //try again
     } else{
       passport.authenticate("local")(req, res, function(){
-        res.redirect("secrets");
+        res.redirect("/secrets");
       });
     }
   });
 
+});
+
+app.post("/submit", (req, res) => {
+  const submittedSecret = req.body.secret;
+
+  User.findById(req.user.id, (err, foundUser) => {
+    if(err){
+      console.log(err);
+    } else{
+      if(foundUser){
+        foundUser.secret = submittedSecret;
+        foundUser.save(function(){
+          res.redirect("/secrets");
+        });
+      }
+    }
+  });
 });
 
 app.listen(3000, function() {
